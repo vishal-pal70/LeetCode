@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, BookOpen, CheckCircle, LogOut, User, CreditCard, Rocket, Lightbulb, Trophy, Calendar } from "lucide-react";
+import { LayoutDashboard, BookOpen, CheckCircle, LogOut, User, CreditCard, Rocket, Lightbulb, Trophy, Calendar, Shield } from "lucide-react";
 import { motion } from 'framer-motion';
 
 function Home() {
@@ -208,6 +208,16 @@ function Home() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {/* Admin Button */}
+            {user && user.role === 'admin' && (
+              <Button
+                onClick={() => navigate('/admin')}
+                className="bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white shadow-lg flex items-center"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Admin
+              </Button>
+            )}
           </div>
         </motion.header>
 

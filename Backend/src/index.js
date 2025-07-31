@@ -13,10 +13,23 @@ const videoRouter = require('./routes/videoRoute');
 const studyRouter = require('./routes/studyPlan');
 
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://leetcode-frontend-bps2.onrender.com'
+];
+
 app.use(cors({
-    origin: 'https://leetcode-frontend-bps2.onrender.com',
-    credentials: true
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
+
 
 app.use(express.json());
 app.use(cookieParser());

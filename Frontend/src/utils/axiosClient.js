@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-    baseURL: 'http://localhost:3000',
+    baseURL: 'https://nexuscode-backend.onrender.com',
     withCredentials: true,
     headers:{
         'content-type': 'application/json'

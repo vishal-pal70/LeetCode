@@ -14,7 +14,7 @@ const studyRouter = require('./routes/studyPlan');
 
 
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: 'https://leetcode-frontend-bps2.onrender.com/',
     credentials: true
 }));
 

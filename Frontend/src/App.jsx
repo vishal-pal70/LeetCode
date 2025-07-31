@@ -2,7 +2,7 @@ import { Routes, Route, Navigate} from "react-router"
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import LandingPage from "./pages/LandingPage"; // Import the landing page
+import LandingPage from "./pages/landingPage"; 
 import  { checkAuth } from "./authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
@@ -14,7 +14,6 @@ import AdminUpdate from "./component/AdminUpdate";
 import AllProblems from "./component/allProblem";
 import Achievement from "./component/Achievement";
 import StudyPlan from "./component/StudyPlan";
-// import Profile from "./pages/Profile";
 import LearningResources from "./pages/LearningResources";
 
 function App() {
@@ -85,11 +84,6 @@ function App() {
           path="/resources" 
           element={<LearningResources />} 
         />
-
-        {/* <Route 
-          path="/profile/:id" 
-          element={<Profile />} 
-        /> */}
         
         <Route 
           path="/admin/create" 

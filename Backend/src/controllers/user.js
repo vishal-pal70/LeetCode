@@ -4,6 +4,7 @@ const User = require('../models/userSchema');
 const userValidate = require('../utils/validator');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const Problem = require('../models/problemSchema')
 
 
 const register = async (req, res)=>{
@@ -30,13 +31,7 @@ const register = async (req, res)=>{
        }
 
 
-      res.cookie('token', token, {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'None', // 🔥 Required when frontend & backend are on different domains
-  maxAge: 60 * 60 * 1000 // 1 hour
-});
-
+       res.cookie('token', token, {maxAge: 60*60*1000});
 
        res.status(201).json({
         user:reply,
@@ -78,13 +73,7 @@ const login = async (req,res)=>{
 
              // jwt token
        const token = jwt.sign({_id:user._id, emailId:emailId, role: user.role}, process.env.JWT_KEY, {expiresIn: 60*60});
-       res.cookie('token', token, {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'None', // 🔥 Required when frontend & backend are on different domains
-  maxAge: 60 * 60 * 1000 // 1 hour
-});
-
+       res.cookie('token', token, {maxAge: 60*60*1000});
 
        res.status(201).json({
         user:reply,
@@ -176,4 +165,32 @@ const getUser = async (req, res) => {
   }
 };
 
-module.exports ={register, login, logout, adminRegister, deleteProfile, getUser}
+
+
+const getStats = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalProblems = await Problem.countDocuments();
+    const totalSubmissions = await Submission.countDocuments();
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalUsers,
+        totalProblems,
+        totalSubmissions,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch statistics",
+    });
+  }
+};
+
+module.exports = { getStats };
+
+
+module.exports ={register, login, logout, adminRegister, deleteProfile, getUser, getStats}

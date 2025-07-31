@@ -30,7 +30,13 @@ const register = async (req, res)=>{
        }
 
 
-       res.cookie('token', token, {maxAge: 60*60*1000});
+      res.cookie('token', token, {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'None', // 🔥 Required when frontend & backend are on different domains
+  maxAge: 60 * 60 * 1000 // 1 hour
+});
+
 
        res.status(201).json({
         user:reply,
@@ -72,7 +78,13 @@ const login = async (req,res)=>{
 
              // jwt token
        const token = jwt.sign({_id:user._id, emailId:emailId, role: user.role}, process.env.JWT_KEY, {expiresIn: 60*60});
-       res.cookie('token', token, {maxAge: 60*60*1000});
+       res.cookie('token', token, {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'None', // 🔥 Required when frontend & backend are on different domains
+  maxAge: 60 * 60 * 1000 // 1 hour
+});
+
 
        res.status(201).json({
         user:reply,

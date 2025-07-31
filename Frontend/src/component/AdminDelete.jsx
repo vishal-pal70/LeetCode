@@ -43,6 +43,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { motion } from 'framer-motion';
 
 const AdminDelete = () => {
   const [problems, setProblems] = useState([]);
@@ -133,13 +134,13 @@ const AdminDelete = () => {
 
   const difficultyBadge = (difficulty) => {
     const colorMap = {
-      easy: 'bg-green-100 text-green-800 border-green-200',
-      medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      hard: 'bg-red-100 text-red-800 border-red-200'
+      easy: 'bg-green-500/20 text-green-400 border-green-500/30',
+      medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+      hard: 'bg-red-500/20 text-red-400 border-red-500/30'
     };
     
     const difficultyLower = difficulty.toLowerCase();
-    const colorClass = colorMap[difficultyLower] || 'bg-gray-100 text-gray-800 border-gray-200';
+    const colorClass = colorMap[difficultyLower] || 'bg-gray-500/20 text-gray-300 border-gray-500/30';
     
     return (
       <Badge className={`${colorClass} px-3 py-1 rounded-full font-medium border`}>
@@ -154,316 +155,347 @@ const AdminDelete = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+      <div className="flex justify-center items-center h-64 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+        <Loader2 className="h-12 w-12 animate-spin text-purple-500" />
         <span className="sr-only">Loading problems...</span>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-7xl">
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-2xl font-bold">Problem Management</CardTitle>
-              <p className="text-gray-600 mt-1">Manage and delete coding problems</p>
-            </div>
-            <Button 
-              variant="outline" 
-              onClick={resetFilters}
-              disabled={searchTerm === '' && difficultyFilter === 'All'}
-            >
-              <X className="h-4 w-4 mr-1" />
-              Reset Filters
-            </Button>
-          </div>
-        </CardHeader>
-        
-        <CardContent>
-          {deleteSuccess && (
-            <Alert className="mb-6 border-green-500 text-green-700 bg-green-50">
-              <AlertTitle>Success!</AlertTitle>
-              <AlertDescription>{deleteSuccess}</AlertDescription>
-            </Alert>
-          )}
-          {deleteError && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{deleteError}</AlertDescription>
-            </Alert>
-          )}
-          
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search problems by title or tags..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
-                  {difficultyFilter === 'All' ? 'Filter by Difficulty' : difficultyFilter}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setDifficultyFilter('All')}>
-                  <span className={difficultyFilter === 'All' ? 'font-semibold' : ''}>All Difficulties</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setDifficultyFilter('Easy')}>
-                  <span className={difficultyFilter === 'Easy' ? 'font-semibold text-green-600' : ''}>Easy</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setDifficultyFilter('Medium')}>
-                  <span className={difficultyFilter === 'Medium' ? 'font-semibold text-yellow-600' : ''}>Medium</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setDifficultyFilter('Hard')}>
-                  <span className={difficultyFilter === 'Hard' ? 'font-semibold text-red-600' : ''}>Hard</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {(searchTerm !== '' || difficultyFilter !== 'All') && (
-            <div className="mb-6 flex flex-wrap gap-2">
-              {searchTerm !== '' && (
-                <Badge className="flex items-center gap-1 bg-blue-50 text-blue-700">
-                  Search: "{searchTerm}"
-                  <button 
-                    onClick={() => setSearchTerm('')}
-                    className="ml-1 rounded-full p-0.5 hover:bg-blue-100"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              )}
-              {difficultyFilter !== 'All' && (
-                <Badge className="flex items-center gap-1 bg-purple-50 text-purple-700">
-                  Difficulty: {difficultyFilter}
-                  <button 
-                    onClick={() => setDifficultyFilter('All')}
-                    className="ml-1 rounded-full p-0.5 hover:bg-purple-100"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              )}
-            </div>
-          )}
-
-          {error ? (
-            <Alert variant="destructive" className="mb-6">
-              <AlertTitle>Error Loading Problems</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ) : (
-            <>
-              <div className="rounded-lg border">
-                <Table>
-                  <TableHeader className="bg-gray-50">
-                    <TableRow>
-                      <TableHead className="w-12">#</TableHead>
-                      <TableHead className="min-w-[200px]">Title</TableHead>
-                      <TableHead className="w-32">Difficulty</TableHead>
-                      <TableHead>Tags</TableHead>
-                      <TableHead className="w-24 text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentProblems.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12">
-                          <div className="flex flex-col items-center justify-center">
-                            <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16 mb-4" />
-                            <p className="text-gray-500">No problems found</p>
-                            <p className="text-gray-400 text-sm mt-2">
-                              Try adjusting your search or filter
-                            </p>
-                            <Button 
-                              variant="ghost" 
-                              className="mt-2"
-                              onClick={resetFilters}
-                            >
-                              Clear all filters
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      currentProblems.map((problem, index) => (
-                        <TableRow key={problem._id} className="hover:bg-gray-50">
-                          <TableCell>{indexOfFirstItem + index + 1}</TableCell>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-3">
-                              <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
-                              <div className="font-medium">{problem.title}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {difficultyBadge(problem.difficulty)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap gap-2">
-                              {problem.tags && problem.tags.split(',').map((tag, i) => (
-                                <Badge 
-                                  key={i} 
-                                  variant="outline"
-                                  className="text-gray-600 bg-gray-50"
-                                >
-                                  {tag.trim()}
-                                </Badge>
-                              ))}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreVertical className="h-4 w-4" />
-                                  <span className="sr-only">Actions</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent>
-                                <DropdownMenuItem
-                                  onClick={() => openDeleteDialog(problem)}
-                                  className="text-red-600 focus:bg-red-50"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-sm text-gray-600">
-                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredProblems.length)} of {filteredProblems.length} problems
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline"
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(currentPage - 1)}
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous
-                  </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      const pageNum = currentPage <= 3 
-                        ? i + 1 
-                        : currentPage >= totalPages - 2 
-                          ? totalPages - 4 + i 
-                          : currentPage - 2 + i;
-                      
-                      if (pageNum > 0 && pageNum <= totalPages) {
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={currentPage === pageNum ? "default" : "outline"}
-                            size="icon"
-                            onClick={() => setCurrentPage(pageNum)}
-                            disabled={currentPage === pageNum}
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      }
-                      return null;
-                    })}
-                    {totalPages > 5 && currentPage < totalPages - 2 && (
-                      <span className="px-2">...</span>
-                    )}
-                    {totalPages > 5 && currentPage < totalPages - 1 && (
-                      <Button
-                        variant={currentPage === totalPages ? "default" : "outline"}
-                        size="icon"
-                        onClick={() => setCurrentPage(totalPages)}
-                        disabled={currentPage === totalPages}
-                      >
-                        {totalPages}
-                      </Button>
-                    )}
-                  </div>
-                  <Button 
-                    variant="outline"
-                    disabled={currentPage >= totalPages}
-                    onClick={() => setCurrentPage(currentPage + 1)}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      <Dialog open={deleteDialogOpen} onOpenChange={closeDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Problem</DialogTitle>
-            <DialogDescription>
-              This action cannot be undone. Are you sure you want to permanently delete this problem?
-            </DialogDescription>
-          </DialogHeader>
-          
-          {problemToDelete && (
-            <div className="p-4 border rounded-lg bg-gray-50">
-              <div className="flex items-center gap-3">
-                <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-100 p-4">
+      <div className="container mx-auto max-w-7xl">
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+        >
+          <Card className="mb-6 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700">
+            <CardHeader>
+              <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="font-semibold">{problemToDelete.title}</h4>
-                  <div className="flex items-center gap-2 mt-1">
-                    {difficultyBadge(problemToDelete.difficulty)}
-                  </div>
+                  <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-pink-400">
+                    Problem Management
+                  </CardTitle>
+                  <p className="text-gray-400 mt-1">Manage and delete coding problems</p>
                 </div>
+                <Button 
+                  variant="outline" 
+                  className="border-gray-700 text-gray-300 hover:bg-gray-700"
+                  onClick={resetFilters}
+                  disabled={searchTerm === '' && difficultyFilter === 'All'}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Reset Filters
+                </Button>
               </div>
-            </div>
-          )}
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={closeDeleteDialog}
-              disabled={deleting}
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
+            </CardHeader>
+            
+            <CardContent>
+              {deleteSuccess && (
+                <Alert className="mb-6 bg-green-900/30 border-green-500/50 text-green-400">
+                  <AlertTitle>Success!</AlertTitle>
+                  <AlertDescription>{deleteSuccess}</AlertDescription>
+                </Alert>
+              )}
+              {deleteError && (
+                <Alert className="mb-6 bg-red-900/30 border-red-500/50 text-red-400">
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{deleteError}</AlertDescription>
+                </Alert>
+              )}
+              
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search problems by title or tags..."
+                    className="pl-10 bg-gray-800/50 border-gray-700 text-white"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2 border-gray-700 text-gray-300 hover:bg-gray-700">
+                      <Filter className="h-4 w-4" />
+                      {difficultyFilter === 'All' ? 'Filter by Difficulty' : difficultyFilter}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
+                    <DropdownMenuItem 
+                      onClick={() => setDifficultyFilter('All')}
+                      className="hover:bg-gray-700"
+                    >
+                      <span className={difficultyFilter === 'All' ? 'font-semibold text-orange-400' : ''}>All Difficulties</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setDifficultyFilter('Easy')}
+                      className="hover:bg-gray-700"
+                    >
+                      <span className={difficultyFilter === 'Easy' ? 'font-semibold text-green-400' : ''}>Easy</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setDifficultyFilter('Medium')}
+                      className="hover:bg-gray-700"
+                    >
+                      <span className={difficultyFilter === 'Medium' ? 'font-semibold text-yellow-400' : ''}>Medium</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setDifficultyFilter('Hard')}
+                      className="hover:bg-gray-700"
+                    >
+                      <span className={difficultyFilter === 'Hard' ? 'font-semibold text-red-400' : ''}>Hard</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {(searchTerm !== '' || difficultyFilter !== 'All') && (
+                <div className="mb-6 flex flex-wrap gap-2">
+                  {searchTerm !== '' && (
+                    <Badge className="flex items-center gap-1 bg-blue-500/20 text-blue-400 border-blue-500/30">
+                      Search: "{searchTerm}"
+                      <button 
+                        onClick={() => setSearchTerm('')}
+                        className="ml-1 rounded-full p-0.5 hover:bg-blue-500/30"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+                  {difficultyFilter !== 'All' && (
+                    <Badge className="flex items-center gap-1 bg-purple-500/20 text-purple-400 border-purple-500/30">
+                      Difficulty: {difficultyFilter}
+                      <button 
+                        onClick={() => setDifficultyFilter('All')}
+                        className="ml-1 rounded-full p-0.5 hover:bg-purple-500/30"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              {error ? (
+                <Alert className="mb-6 bg-red-900/30 border-red-500/50 text-red-400">
+                  <AlertTitle>Error Loading Problems</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               ) : (
                 <>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Problem
+                  <div className="rounded-lg border border-gray-700">
+                    <Table>
+                      <TableHeader className="bg-gray-800/50">
+                        <TableRow>
+                          <TableHead className="w-12 text-gray-300">#</TableHead>
+                          <TableHead className="min-w-[200px] text-gray-300">Title</TableHead>
+                          <TableHead className="w-32 text-gray-300">Difficulty</TableHead>
+                          <TableHead className="text-gray-300">Tags</TableHead>
+                          <TableHead className="w-24 text-right text-gray-300">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {currentProblems.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-12">
+                              <div className="flex flex-col items-center justify-center">
+                                <div className="bg-gray-700 border border-dashed border-gray-600 rounded-xl w-16 h-16 mb-4" />
+                                <p className="text-gray-400">No problems found</p>
+                                <p className="text-gray-500 text-sm mt-2">
+                                  Try adjusting your search or filter
+                                </p>
+                                <Button 
+                                  variant="ghost" 
+                                  className="mt-2 text-gray-300"
+                                  onClick={resetFilters}
+                                >
+                                  Clear all filters
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          currentProblems.map((problem, index) => (
+                            <TableRow 
+                              key={problem._id} 
+                              className="hover:bg-gray-800/30 border-b border-gray-700"
+                            >
+                              <TableCell className="text-gray-300">{indexOfFirstItem + index + 1}</TableCell>
+                              <TableCell className="font-medium">
+                                <div className="flex items-center gap-3">
+                                  <div className="bg-gray-700 border border-dashed border-gray-600 rounded-xl w-16 h-16" />
+                                  <div className="font-medium text-gray-100">{problem.title}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {difficultyBadge(problem.difficulty)}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-wrap gap-2">
+                                  {problem.tags && problem.tags.split(',').map((tag, i) => (
+                                    <Badge 
+                                      key={i} 
+                                      className="bg-purple-500/20 text-purple-400 border-purple-500/30"
+                                    >
+                                      {tag.trim()}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-gray-300 hover:bg-gray-700">
+                                      <MoreVertical className="h-4 w-4" />
+                                      <span className="sr-only">Actions</span>
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
+                                    <DropdownMenuItem
+                                      onClick={() => openDeleteDialog(problem)}
+                                      className="text-red-400 focus:bg-red-500/20"
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-sm text-gray-400">
+                      Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredProblems.length)} of {filteredProblems.length} problems
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline"
+                        className="border-gray-700 text-gray-300 hover:bg-gray-700"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Previous
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          const pageNum = currentPage <= 3 
+                            ? i + 1 
+                            : currentPage >= totalPages - 2 
+                              ? totalPages - 4 + i 
+                              : currentPage - 2 + i;
+                          
+                          if (pageNum > 0 && pageNum <= totalPages) {
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={currentPage === pageNum ? "default" : "outline"}
+                                className={currentPage === pageNum ? "bg-gradient-to-r from-orange-500 to-pink-500" : "border-gray-700 text-gray-300 hover:bg-gray-700"}
+                                size="icon"
+                                onClick={() => setCurrentPage(pageNum)}
+                                disabled={currentPage === pageNum}
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          }
+                          return null;
+                        })}
+                        {totalPages > 5 && currentPage < totalPages - 2 && (
+                          <span className="px-2 text-gray-400">...</span>
+                        )}
+                        {totalPages > 5 && currentPage < totalPages - 1 && (
+                          <Button
+                            variant={currentPage === totalPages ? "default" : "outline"}
+                            className={currentPage === totalPages ? "bg-gradient-to-r from-orange-500 to-pink-500" : "border-gray-700 text-gray-300 hover:bg-gray-700"}
+                            size="icon"
+                            onClick={() => setCurrentPage(totalPages)}
+                            disabled={currentPage === totalPages}
+                          >
+                            {totalPages}
+                          </Button>
+                        )}
+                      </div>
+                      <Button 
+                        variant="outline"
+                        className="border-gray-700 text-gray-300 hover:bg-gray-700"
+                        disabled={currentPage >= totalPages}
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
                 </>
               )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <Dialog open={deleteDialogOpen} onOpenChange={closeDeleteDialog}>
+          <DialogContent className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 text-white">
+            <DialogHeader>
+              <DialogTitle className="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-pink-400">
+                Delete Problem
+              </DialogTitle>
+              <DialogDescription className="text-gray-400">
+                This action cannot be undone. Are you sure you want to permanently delete this problem?
+              </DialogDescription>
+            </DialogHeader>
+            
+            {problemToDelete && (
+              <div className="p-4 border border-gray-700 rounded-lg bg-gray-800/30">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gray-700 border border-dashed border-gray-600 rounded-xl w-16 h-16" />
+                  <div>
+                    <h4 className="font-semibold text-gray-100">{problemToDelete.title}</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      {difficultyBadge(problemToDelete.difficulty)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                className="border-gray-700 text-gray-300 hover:bg-gray-700"
+                onClick={closeDeleteDialog}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-red-500 to-rose-500 text-white hover:opacity-90"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Problem
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };

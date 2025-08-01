@@ -1,8 +1,24 @@
-// src/pages/LandingPage.jsx
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router';
 import { Code, Trophy, ChevronRight, Terminal, Zap, Shield, Cpu, Sparkles, User, Lock } from 'lucide-react';
+
+import googleLogo from '../assets/companies/google.png';
+import amazonLogo from '../assets/companies/amazon.png';
+import microsoftLogo from '../assets/companies/microsoft.png';
+import metaLogo from '../assets/companies/meta.png';
+import appleLogo from '../assets/companies/apple.png';
+import netflixLogo from '../assets/companies/netflix.png';
+import adobeLogo from '../assets/companies/adobe.png';
+import oracleLogo from '../assets/companies/oracle.png';
+import uberLogo from '../assets/companies/uber.png';
+import twitterLogo from '../assets/companies/twitter.png';
+import airbnbLogo from '../assets/companies/airbnb.png';
+import spotifyLogo from '../assets/companies/spotify.png';
+import teslaLogo from '../assets/companies/tesla.png';
+import salesforceLogo from '../assets/companies/salesforce.png';
+import stripeLogo from '../assets/companies/stripe.png';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -78,12 +94,6 @@ const LandingPage = () => {
     }
   ];
 
-  const companies = [
-    "Google", "Amazon", "Microsoft", "Meta", "Apple", 
-    "Netflix", "Adobe", "Oracle", "Uber", "Twitter",
-    "Airbnb", "Spotify", "Tesla", "Salesforce", "Stripe"
-  ];
-
   const testimonials = [
     {
       name: "Alex Morgan",
@@ -103,6 +113,25 @@ const LandingPage = () => {
       content: "The community support and detailed solutions helped me understand complex algorithms much faster.",
       avatar: "bg-gradient-to-br from-gray-400 to-slate-500"
     }
+  ];
+
+
+  const companies = [
+    { name: "Google", logo: googleLogo, color: "#4285F4" },
+    { name: "Amazon", logo: amazonLogo, color: "#FF9900" },
+    { name: "Microsoft", logo: microsoftLogo, color: "#00A4EF" },
+    { name: "Meta", logo: metaLogo, color: "#1877F2" },
+    { name: "Apple", logo: appleLogo, color: "#A2AAAD" },
+    { name: "Netflix", logo: netflixLogo, color: "#E50914" },
+    { name: "Adobe", logo: adobeLogo, color: "#FF0000" },
+    { name: "Oracle", logo: oracleLogo, color: "#F80000" },
+    { name: "Uber", logo: uberLogo, color: "#000000" },
+    { name: "Twitter", logo: twitterLogo, color: "#1DA1F2" },
+    { name: "Airbnb", logo: airbnbLogo, color: "#FF5A5F" },
+    { name: "Spotify", logo: spotifyLogo, color: "#1DB954" },
+    { name: "Tesla", logo: teslaLogo, color: "#CC0000" },
+    { name: "Salesforce", logo: salesforceLogo, color: "#00A1E0" },
+    { name: "Stripe", logo: stripeLogo, color: "#635BFF" }
   ];
 
   return (
@@ -410,17 +439,43 @@ const LandingPage = () => {
             </motion.p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 max-w-5xl mx-auto">
             {companies.map((company, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  transition: { 
+                    delay: index * 0.1, 
+                    duration: 0.5,
+                    type: "spring",
+                    stiffness: 300
+                  } 
+                }}
+                whileHover={{
+                  scale: 1.1,
+                  rotate: [0, -5, 0, 5, 0],
+                  boxShadow: `0 0 20px ${company.color}80`,
+                  transition: { 
+                    duration: 0.5,
+                    rotate: { duration: 0.5 }
+                  }
+                }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.05, duration: 0.4 }}
-                className="bg-gray-800/30 p-4 rounded-xl border border-gray-700 flex items-center justify-center h-20 hover:shadow-lg hover:border-orange-500/30 transition-all duration-500 group"
+                className="bg-gray-800/30 rounded-xl border border-gray-700 flex items-center justify-center p-4 h-24 transition-all duration-500"
               >
-                <span className="font-medium text-gray-200 group-hover:text-orange-300 transition-colors duration-300">{company}</span>
+                <motion.img 
+                  src={company.logo} 
+                  alt={company.name}
+                  className="h-12 object-contain"
+                  whileHover={{ 
+                    scale: 1.15,
+                    filter: "brightness(1.2) drop-shadow(0 0 8px rgba(255,255,255,0.3))"
+                  }}
+                  transition={{ duration: 0.3 }}
+                />
               </motion.div>
             ))}
           </div>

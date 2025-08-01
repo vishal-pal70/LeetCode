@@ -31,28 +31,30 @@ import { motion } from 'framer-motion';
 function Admin() {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
-    problems: null,
-    users: null,
-    submissions: null,
-    activeToday: null
+    problems: 0,
+    users: 0,
+    submissions: 0,
+    activeToday: 0
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Fetch stats from backend
+  
   useEffect(() => {
     const fetchStats = async () => {
       try {
         setLoading(true);
         const response = await axiosClient.get('/user/stats');
+        
         setStats({
-          problems: response.data.totalProblems ?? 0,
-          users: response.data.totalUsers ?? 0,
-          submissions: response.data.totalSubmissions ?? 0,
-          activeToday: response.data.activeToday ?? 0
+          problems: response.data?.stats?.totalProblems ?? 0,
+          users: response.data?.stats?.totalUsers ?? 0,
+          submissions: response.data?.stats?.totalSubmissions ?? 0,
+          activeToday: response.data?.active_today ?? 1
         });
-        console.log(response.data.totalProblems);
-      } catch (error) {
-        console.error('Error fetching stats:', error);
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+        setError('Failed to load statistics');
       } finally {
         setLoading(false);
       }
@@ -64,15 +66,18 @@ function Admin() {
   const refreshStats = async () => {
     try {
       setLoading(true);
+      setError('');
       const response = await axiosClient.get('/user/stats');
+      
       setStats({
-          problems: response.data.totalProblems ?? 0,
-          users: response.data.totalUsers ?? 0,
-          submissions: response.data.totalSubmissions ?? 0,
-          activeToday: response.data.activeToday ?? 0
-        });
-    } catch (error) {
-      console.error('Error refreshing stats:', error);
+        problems: response.data?.total_problems ?? 0,
+        users: response.data?.total_users ?? 0,
+        submissions: response.data?.total_submissions ?? 0,
+        activeToday: response.data?.active_today ?? 0
+      });
+    } catch (err) {
+      console.error('Error refreshing stats:', err);
+      setError('Failed to refresh data');
     } finally {
       setLoading(false);
     }
@@ -193,6 +198,20 @@ function Admin() {
       </motion.header>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 flex justify-between items-center"
+          >
+            <span>{error}</span>
+            <Button variant="ghost" size="sm" onClick={() => setError('')}>
+              Dismiss
+            </Button>
+          </motion.div>
+        )}
+
         {/* Dashboard Stats */}
         <motion.div 
           initial={{ opacity: 0 }}

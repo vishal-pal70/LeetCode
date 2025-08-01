@@ -33,7 +33,9 @@ import {
   ScrollText,
   Copy,
   RotateCcw,
-  Sparkles
+  Sparkles,
+  Lock,
+  CreditCard
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -54,6 +56,9 @@ const ProblemPage = () => {
   const [rightPanelActiveTab, setRightPanelActiveTab] = useState('code');
   const [isResetting, setIsResetting] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [hasPaid, setHasPaid] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const editorRef = useRef(null);
   const navigate = useNavigate();
   let { problemId } = useParams();
@@ -83,6 +88,18 @@ const ProblemPage = () => {
       setCode(initialCode);
     }
   }, [selectedLanguage, problem]);
+
+  const handlePaymentSubmit = (e) => {
+    e.preventDefault();
+    setIsProcessingPayment(true);
+    
+    // Simulate payment processing
+    setTimeout(() => {
+      setHasPaid(true);
+      setIsProcessingPayment(false);
+      setShowPaymentForm(false);
+    }, 1500);
+  };
 
   const handleEditorChange = (value) => {
     setCode(value || '');
@@ -379,36 +396,271 @@ const ProblemPage = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="text-white">Editorial</CardTitle>
-                    <CardDescription className="text-gray-400">Approaches and solutions for this problem</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="prose prose-invert max-w-none">
-                      <h3 className="text-white">Optimal Solution</h3>
-                      <p className="text-gray-300">
-                        The optimal solution for this problem involves using a two-pointer technique 
-                        to efficiently find the solution without extra space.
-                      </p>
-                      
-                      <h3 className="mt-6 text-white">Complexity Analysis</h3>
-                      <ul className="text-gray-300">
-                        <li>Time Complexity: O(n)</li>
-                        <li>Space Complexity: O(1)</li>
-                      </ul>
-                      
-                      <h3 className="mt-6 text-white">Solution Code</h3>
-                      <pre className="bg-gray-700 p-4 rounded overflow-x-auto">
-                        <code className="text-gray-200">
-                          {`function solution(nums, target) {
+                {hasPaid ? (
+                  <div className="space-y-6">
+                    <Card className="bg-gray-800 border-gray-700">
+                      <CardHeader>
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <CardTitle className="text-white">Premium Editorial</CardTitle>
+                            <CardDescription className="text-gray-400">
+                              Expert solution with video explanation
+                            </CardDescription>
+                          </div>
+                          <Badge className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white">
+                            <Lock className="h-4 w-4 mr-1" />
+                            Unlocked
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="prose prose-invert max-w-none">
+                          <h3 className="text-white">Video Explanation</h3>
+                          
+                          {/* Video Player Section */}
+                          <div className="mt-4 rounded-xl overflow-hidden bg-black aspect-video max-w-3xl">
+                            <iframe
+                              width="100%"
+                              height="100%"
+                              src="https://www.youtube.com/embed/moZNKL37w-s?si=JbHlZ1I5U7qjVj9Q"
+                              title="Problem Solution Video"
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              className="w-full h-full"
+                            ></iframe>
+                          </div>
+                          
+                          <h3 className="mt-8 text-white">Optimal Solution</h3>
+                          <p className="text-gray-300">
+                            The optimal solution for this problem involves using a two-pointer technique 
+                            to efficiently find the solution without extra space.
+                          </p>
+                          
+                          <h3 className="mt-6 text-white">Complexity Analysis</h3>
+                          <ul className="text-gray-300">
+                            <li>Time Complexity: O(n)</li>
+                            <li>Space Complexity: O(1)</li>
+                          </ul>
+                          
+                          <h3 className="mt-6 text-white">Solution Code</h3>
+                          <pre className="bg-gray-700 p-4 rounded overflow-x-auto">
+                            <code className="text-gray-200">
+                              {`function solution(nums, target) {
   // Implementation goes here
 }`}
-                        </code>
-                      </pre>
-                    </div>
-                  </CardContent>
-                </Card>
+                            </code>
+                          </pre>
+                          
+                          <h3 className="mt-6 text-white">Key Insights</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <Card className="bg-indigo-900/20 border-indigo-800">
+                              <CardContent className="p-4">
+                                <h4 className="font-semibold text-white mb-2">Pattern Recognition</h4>
+                                <p className="text-indigo-200 text-sm">
+                                  Recognize that sorted arrays allow efficient searching with two pointers
+                                </p>
+                              </CardContent>
+                            </Card>
+                            <Card className="bg-indigo-900/20 border-indigo-800">
+                              <CardContent className="p-4">
+                                <h4 className="font-semibold text-white mb-2">Edge Cases</h4>
+                                <p className="text-indigo-200 text-sm">
+                                  Handle cases where the same element is used twice or no solution exists
+                                </p>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-gray-800 border-gray-700">
+                      <CardHeader>
+                        <CardTitle className="text-white">Practice Recommendations</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="p-4 bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-lg">
+                            <h4 className="font-semibold text-white mb-2">Similar Problems</h4>
+                            <ul className="text-gray-300 space-y-2 mt-2">
+                              <li className="flex items-center">
+                                <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                                Two Sum II - Input Array Is Sorted
+                              </li>
+                              <li className="flex items-center">
+                                <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                                3Sum
+                              </li>
+                              <li className="flex items-center">
+                                <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                                4Sum
+                              </li>
+                            </ul>
+                          </div>
+                          <div className="p-4 bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-lg">
+                            <h4 className="font-semibold text-white mb-2">Learning Resources</h4>
+                            <ul className="text-gray-300 space-y-2 mt-2">
+                              <li className="flex items-center">
+                                <BookText className="h-4 w-4 text-blue-400 mr-2" />
+                                Two Pointer Technique Explained
+                              </li>
+                              <li className="flex items-center">
+                                <BookText className="h-4 w-4 text-blue-400 mr-2" />
+                                Solving Array Problems Efficiently
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  <Card className="bg-gray-800 border-gray-700">
+                    <CardContent className="p-8 text-center">
+                      <div className="flex justify-center mb-6">
+                        <div className="bg-gradient-to-br from-yellow-700 to-amber-800 w-20 h-20 rounded-full flex items-center justify-center">
+                          <Lock className="h-10 w-10 text-amber-300" />
+                        </div>
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-3">Premium Content Locked</h3>
+                      <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                        Unlock detailed video explanations, solution breakdowns, and expert insights by upgrading to Premium.
+                      </p>
+                      
+                      <div className="bg-gradient-to-br from-gray-700 to-gray-800 border border-gray-700 rounded-xl p-6 mb-6 max-w-lg mx-auto">
+                        <h4 className="font-semibold text-white mb-4 flex items-center justify-center">
+                          <Sparkles className="h-5 w-5 text-amber-400 mr-2" />
+                          Premium Editorial Includes:
+                        </h4>
+                        <ul className="text-gray-300 space-y-3 text-left">
+                          <li className="flex items-start">
+                            <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <span>Step-by-step video explanations</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <span>Multiple solution approaches with complexity analysis</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <span>Pattern recognition and problem-solving strategies</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <span>Recommended practice problems</span>
+                          </li>
+                        </ul>
+                      </div>
+                      
+                      {showPaymentForm ? (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md mx-auto"
+                        >
+                          <h3 className="text-lg font-bold text-white mb-4 flex items-center justify-center">
+                            <CreditCard className="h-5 w-5 mr-2 text-blue-400" />
+                            Payment Information
+                          </h3>
+                          <form onSubmit={handlePaymentSubmit} className="space-y-4">
+                            <div>
+                              <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-300 mb-1">
+                                Card Number
+                              </label>
+                              <input
+                                type="text"
+                                id="cardNumber"
+                                placeholder="4242 4242 4242 4242"
+                                className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                required
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label htmlFor="expiry" className="block text-sm font-medium text-gray-300 mb-1">
+                                  Expiry Date
+                                </label>
+                                <input
+                                  type="text"
+                                  id="expiry"
+                                  placeholder="MM/YY"
+                                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  required
+                                />
+                              </div>
+                              
+                              <div>
+                                <label htmlFor="cvc" className="block text-sm font-medium text-gray-300 mb-1">
+                                  CVC
+                                </label>
+                                <input
+                                  type="text"
+                                  id="cvc"
+                                  placeholder="123"
+                                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  required
+                                />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+                                Name on Card
+                              </label>
+                              <input
+                                type="text"
+                                id="name"
+                                placeholder="John Doe"
+                                className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                required
+                              />
+                            </div>
+                            
+                            <div className="flex justify-between pt-4">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setShowPaymentForm(false)}
+                                className="bg-gray-700 text-gray-300 hover:bg-gray-600"
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                type="submit"
+                                disabled={isProcessingPayment}
+                                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                              >
+                                {isProcessingPayment ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  "Complete Payment"
+                                )}
+                              </Button>
+                            </div>
+                          </form>
+                        </motion.div>
+                      ) : (
+                        <>
+                          <Button
+                            onClick={() => setShowPaymentForm(true)}
+                            className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg px-8 py-6 text-lg font-bold transition-all mb-4"
+                          >
+                            <Lock className="h-5 w-5 mr-2" />
+                            Unlock Premium Editorial - $9.99
+                          </Button>
+                          <p className="text-gray-500 text-sm">
+                            7-day money back guarantee
+                          </p>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </motion.div>
             </TabsContent>
 

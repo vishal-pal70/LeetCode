@@ -12,9 +12,13 @@ import { Badge } from "@/components/ui/badge";
 import { 
   LayoutDashboard, BookOpen, CheckCircle, LogOut, 
   User, CreditCard, Rocket, Lightbulb, Trophy, 
-  Calendar, Shield, Filter, XCircle 
+  Calendar, Shield, Filter, XCircle, Star, Zap, BarChart2, History, Flame
 } from "lucide-react";
 import { motion } from 'framer-motion';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer, Legend
+} from 'recharts';
 
 function Home() {
   const dispatch = useDispatch();
@@ -29,6 +33,7 @@ function Home() {
     status: 'all'
   });
   const [loading, setLoading] = useState(true);
+  const [userLoading, setUserLoading] = useState(true);
   const [stats, setStats] = useState({
     total: 0,
     solved: 0,
@@ -37,6 +42,23 @@ function Home() {
     hard: 0,
   });
   const [allTags, setAllTags] = useState([]);
+  
+  // New state for user profile data
+  const [userProfile, setUserProfile] = useState({
+    rank: 38,
+    points: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    recentActivity: [],
+    solvedBreakdown: {
+      basic: { solved: 0, total: 7 },
+      easy: { solved: 0, total: 10 },
+      medium: { solved: 0, total: 8 },
+      hard: { solved: 0, total: 0 }
+    },
+    submissionsByDate: [],
+    recentSubmissions: []
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,15 +91,81 @@ function Home() {
           medium: problemsRes.data.filter(p => p.difficulty === 'medium').length,
           hard: problemsRes.data.filter(p => p.difficulty === 'hard').length,
         });
+        
+        // Fetch user profile data
+        if (user) {
+          const [submissionsRes] = await Promise.all([
+            axiosClient.get('/user/submissions')
+          ]);
+          
+          // Process submissions data for charts and stats
+          const solvedBreakdown = {
+            basic: { solved: 0, total: 7 },
+            easy: { solved: 0, total: 10 },
+            medium: { solved: 0, total: 8 },
+            hard: { solved: 0, total: 0 }
+          };
+          
+          const recentSubmissions = submissionsRes.data.slice(0, 5);
+          const submissionsByDate = processSubmissionsByDate(submissionsRes.data);
+          
+          // Count solved problems by difficulty
+          solvedRes.data.forEach(problem => {
+            if (problem.difficulty === 'easy') solvedBreakdown.easy.solved++;
+            else if (problem.difficulty === 'medium') solvedBreakdown.medium.solved++;
+            else if (problem.difficulty === 'hard') solvedBreakdown.hard.solved++;
+            else solvedBreakdown.basic.solved++;
+          });
+          
+          setUserProfile(prev => ({
+            ...prev,
+            solvedBreakdown,
+            recentSubmissions,
+            submissionsByDate
+          }));
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
+        setUserLoading(false);
       }
     };
 
     fetchData();
   }, [user]);
+
+  // Process submissions for chart data
+  const processSubmissionsByDate = (submissions) => {
+    // Group submissions by date
+    const grouped = {};
+    submissions.forEach(sub => {
+      const date = new Date(sub.submittedAt).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+      
+      if (!grouped[date]) {
+        grouped[date] = {
+          date,
+          basic: 0,
+          easy: 0,
+          medium: 0,
+          hard: 0
+        };
+      }
+      
+      const diff = sub.difficulty.toLowerCase();
+      if (grouped[date][diff] !== undefined) {
+        grouped[date][diff]++;
+      }
+    });
+    
+    // Convert to array and sort by date
+    return Object.values(grouped).sort((a, b) => 
+      new Date(a.date) - new Date(b.date)
+    );
+  };
 
   const handleLogout = () => {
     dispatch(logoutUser());
@@ -121,7 +209,7 @@ function Home() {
       case 'easy': return 'bg-green-500 text-white';
       case 'medium': return 'bg-yellow-500 text-white';
       case 'hard': return 'bg-red-500 text-white';
-      default: return 'bg-gray-500 text-white';
+      default: return 'bg-blue-500 text-white';
     }
   };
 
@@ -141,24 +229,25 @@ function Home() {
     show: { y: 0, opacity: 1 }
   };
 
-  const cardVariants = {
-    hidden: { scale: 0.9, opacity: 0 },
-    visible: { 
-      scale: 1, 
-      opacity: 1,
-      transition: { 
-        duration: 0.3,
-        ease: "easeOut"
-      }
-    },
-    hover: {
-      scale: 1.03,
-      transition: { duration: 0.2 }
-    }
-  };
-
   // Calculate progress percentage
   const progressPercentage = stats.total > 0 ? (stats.solved / stats.total) * 100 : 0;
+
+  // Custom tooltip for charts
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-gray-800 border border-gray-700 p-3 rounded shadow-lg">
+          <p className="font-bold">{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ color: entry.color }}>
+              {`${entry.name}: ${entry.value}`}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-gray-100 flex">
@@ -237,8 +326,7 @@ function Home() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            {/* Admin Button */}
-            {user && user.role === 'admin' && (
+            {!userLoading && user?.role === 'admin' && (
               <Button
                 onClick={() => navigate('/admin')}
                 className="bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white shadow-lg flex items-center"
@@ -446,12 +534,7 @@ function Home() {
                         <motion.div 
                           key={problem._id}
                           variants={itemVariants}
-                          whileHover={{ 
-                            scale: 1.02,
-                            background: "linear-gradient(to right, rgba(55, 65, 81, 0.7), rgba(17, 24, 39, 0.7))",
-                            borderColor: "rgba(249, 115, 22, 0.5)"
-                          }}
-                          className="flex items-center justify-between p-4 border border-gray-700 rounded-lg cursor-pointer bg-gray-800/50 backdrop-blur-sm"
+                          className="flex items-center justify-between p-4 border border-gray-700 rounded-lg cursor-pointer bg-gray-800/50 backdrop-blur-sm hover:bg-gray-800/70"
                           onClick={() => navigate(`/problem/${problem._id}`)}
                         >
                           <div className="flex-1">
@@ -496,7 +579,7 @@ function Home() {
 
           {/* User Section (Right Sidebar) */}
           <div className="lg:col-span-1 space-y-6">
-            {/* User Profile Card */}
+            {/* Enhanced User Profile Card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -504,66 +587,184 @@ function Home() {
             >
               <Card className="bg-gradient-to-b from-gray-800 to-gray-900 text-white border border-gray-700 shadow-xl">
                 <CardHeader>
-                  <CardTitle className="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-orange-600">
+                  <CardTitle className="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-orange-600 flex items-center">
+                    <User className="h-5 w-5 mr-2" />
                     User Profile
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-col items-center text-center">
-                    <motion.div 
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="mb-4 cursor-pointer"
-                    >
-                      <div className="relative">
-                        <img 
-                          src={profile} 
-                          alt="Profile" 
-                          className="w-16 h-16 rounded-full object-cover border-2 border-orange-500"
-                        />
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-500/30 to-transparent"></div>
-                      </div>
-                    </motion.div>
-                    <h3 className="text-lg font-bold">
-                      {user ? `Welcome, ${user.firstName || 'User'}` : 'Welcome, Guest!'}
-                    </h3>
-                    <p className="text-gray-400 mt-2">
-                      {user ? `You've solved ${stats.solved} problems so far!` : 'Sign in to track your progress'}
-                    </p>
+                  <div className="flex items-center mb-4">
+                    <div className="relative mr-4">
+                      <img 
+                        src={profile} 
+                        alt="Profile" 
+                        className="w-16 h-16 rounded-full object-cover border-2 border-orange-500"
+                      />
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-500/30 to-transparent"></div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold">{user?.firstName || 'User'} {user?.lastName}</h3>
+                      <p className="text-gray-400 text-sm">{user?.emailId || 'user@example.com'}</p>
+                      <p className="text-gray-500 text-xs mt-1">
+                        Joined on {new Date(user?.createdAt || Date.now()).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-800/50 p-4 rounded-lg mb-4">
+                    <h4 className="font-semibold text-orange-400 mb-3 flex items-center">
+                      <Star className="h-4 w-4 mr-2" />
+                      Ranking, Points & Connections
+                    </h4>
                     
-                    {user && (
-                      <div className="w-full mt-6">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Progress</span>
-                          <span>{Math.round(progressPercentage)}%</span>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gray-900/70 p-3 rounded-lg">
+                        <p className="text-gray-400 text-xs">Rank</p>
+                        <p className="font-bold text-lg">#{userProfile.rank}</p>
+                      </div>
+                      <div className="bg-gray-900/70 p-3 rounded-lg">
+                        <p className="text-gray-400 text-xs">Coding Points</p>
+                        <p className="font-bold text-lg">{userProfile.points}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-800/50 p-4 rounded-lg mb-4">
+                    <h4 className="font-semibold text-orange-400 mb-3 flex items-center">
+                      <Flame className="h-4 w-4 mr-2" />
+                      Streaks
+                    </h4>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gray-900/70 p-3 rounded-lg">
+                        <p className="text-gray-400 text-xs">Current Streak</p>
+                        <p className="font-bold text-lg">{userProfile.currentStreak} days</p>
+                      </div>
+                      <div className="bg-gray-900/70 p-3 rounded-lg">
+                        <p className="text-gray-400 text-xs">Longest Streak</p>
+                        <p className="font-bold text-lg">{userProfile.longestStreak} days</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-800/50 p-4 rounded-lg mb-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="font-semibold text-orange-400 flex items-center">
+                        <History className="h-4 w-4 mr-2" />
+                        Recent Activity
+                      </h4>
+                      <p className="text-xs text-gray-400">
+                        Total for period: {userProfile.submissionsByDate.reduce((sum, day) => 
+                          sum + day.basic + day.easy + day.medium + day.hard, 0
+                        )}
+                      </p>
+                    </div>
+                    
+                    <div className="h-40">
+                      {userProfile.submissionsByDate.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={userProfile.submissionsByDate}
+                            margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                            <XAxis dataKey="date" stroke="#888" />
+                            <YAxis stroke="#888" />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend />
+                            <Bar dataKey="basic" stackId="a" fill="#3b82f6" name="Basic" />
+                            <Bar dataKey="easy" stackId="a" fill="#10b981" name="Easy" />
+                            <Bar dataKey="medium" stackId="a" fill="#f59e0b" name="Medium" />
+                            <Bar dataKey="hard" stackId="a" fill="#ef4444" name="Hard" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="h-full flex items-center justify-center text-gray-500">
+                          No recent activity
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-800/50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-orange-400 mb-3 flex items-center">
+                      <BarChart2 className="h-4 w-4 mr-2" />
+                      Problems Solved
+                    </h4>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-blue-400">Basic</span>
+                          <span>{userProfile.solvedBreakdown.basic.solved}/{userProfile.solvedBreakdown.basic.total}</span>
                         </div>
                         <Progress 
-                          value={progressPercentage} 
+                          value={(userProfile.solvedBreakdown.basic.solved / userProfile.solvedBreakdown.basic.total) * 100} 
                           className="h-2 bg-gray-700"
-                          indicatorColor="bg-gradient-to-r from-orange-500 to-orange-600"
+                          indicatorColor="bg-blue-500"
                         />
-                        <div className="grid grid-cols-3 gap-4 mt-4">
-                          <div className="text-center">
-                            <div className="text-lg font-bold">{stats.easy}</div>
-                            <div className="text-xs text-green-400">Easy</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-lg font-bold">{stats.medium}</div>
-                            <div className="text-xs text-yellow-400">Medium</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-lg font-bold">{stats.hard}</div>
-                            <div className="text-xs text-red-400">Hard</div>
-                          </div>
-                        </div>
                       </div>
-                    )}
+                      
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-green-400">Easy</span>
+                          <span>{userProfile.solvedBreakdown.easy.solved}/{userProfile.solvedBreakdown.easy.total}</span>
+                        </div>
+                        <Progress 
+                          value={(userProfile.solvedBreakdown.easy.solved / userProfile.solvedBreakdown.easy.total) * 100} 
+                          className="h-2 bg-gray-700"
+                          indicatorColor="bg-green-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-yellow-400">Medium</span>
+                          <span>{userProfile.solvedBreakdown.medium.solved}/{userProfile.solvedBreakdown.medium.total}</span>
+                        </div>
+                        <Progress 
+                          value={(userProfile.solvedBreakdown.medium.solved / userProfile.solvedBreakdown.medium.total) * 100} 
+                          className="h-2 bg-gray-700"
+                          indicatorColor="bg-yellow-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-red-400">Hard</span>
+                          <span>{userProfile.solvedBreakdown.hard.solved}/{userProfile.solvedBreakdown.hard.total}</span>
+                        </div>
+                        <Progress 
+                          value={(userProfile.solvedBreakdown.hard.solved / userProfile.solvedBreakdown.hard.total) * 100} 
+                          className="h-2 bg-gray-700"
+                          indicatorColor="bg-red-500"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 pt-3 border-t border-gray-700">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Overall Progress</span>
+                        <span className="font-semibold">
+                          {stats.solved}/{stats.total} problems
+                        </span>
+                      </div>
+                      <Progress 
+                        value={progressPercentage} 
+                        className="h-3 bg-gray-700 mt-2"
+                        indicatorColor="bg-gradient-to-r from-orange-500 to-orange-600"
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Solved Problems Card */}
+            {/* Recent Accepted Submissions */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -572,10 +773,10 @@ function Home() {
               <Card className="bg-gradient-to-b from-gray-800 to-gray-900 text-white border border-gray-700 shadow-xl">
                 <CardHeader>
                   <div className="flex justify-between items-center">
-                    <CardTitle className="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-orange-600">
-                      Recently Solved
+                    <CardTitle className="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-orange-600 flex items-center">
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Recent Accepted Submissions
                     </CardTitle>
-                    <Calendar className="h-5 w-5 text-orange-500" />
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -583,47 +784,39 @@ function Home() {
                     variants={containerVariants}
                     initial="hidden"
                     animate="show"
-                    className="space-y-4"
+                    className="space-y-3"
                   >
-                    {solvedProblems.length > 0 ? (
-                      solvedProblems.slice(0, 3).map((problem, index) => (
+                    {userProfile.recentSubmissions.length > 0 ? (
+                      userProfile.recentSubmissions.map((submission, index) => (
                         <motion.div 
-                          key={`${problem._id}-${index}`} 
+                          key={index}
                           variants={itemVariants}
-                          className="flex items-start space-x-3 p-3 rounded-lg bg-gray-800/30 backdrop-blur-sm"
-                          whileHover={{ x: 5 }}
+                          className="flex items-start p-3 rounded-lg bg-gray-800/30 backdrop-blur-sm border border-gray-700"
                         >
-                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{problem.title}</p>
-                            <p className="text-xs text-gray-400">
-                              {new Date(problem.solvedAt).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric'
-                              })}
-                            </p>
+                          <div className="flex-1">
+                            <p className="font-medium">{submission.problemTitle}</p>
+                            <div className="flex items-center mt-1">
+                              <Badge className={`px-2 py-0.5 text-xs mr-2 ${getDifficultyBadgeColor(submission.difficulty)}`}>
+                                {submission.difficulty}
+                              </Badge>
+                              <span className="text-xs text-gray-400">
+                                {new Date(submission.submittedAt).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
                           </div>
-                          <Badge className="bg-gray-700 text-gray-300 text-xs">
-                            {problem.difficulty}
-                          </Badge>
+                          <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-1" />
                         </motion.div>
                       ))
                     ) : (
                       <p className="text-gray-400 text-center py-4">
-                        {user ? "You haven't solved any problems yet" : "Sign in to see solved problems"}
+                        {user ? "No recent submissions" : "Sign in to see submissions"}
                       </p>
                     )}
                   </motion.div>
-                  {solvedProblems.length > 3 && (
-                    <Button 
-                      variant="outline" 
-                      className="w-full mt-4 bg-gradient-to-r from-gray-700 to-gray-800 text-white hover:from-gray-600 hover:to-gray-700 border-gray-600"
-                      onClick={() => navigate('/solved')}
-                    >
-                      View All Solved
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </motion.div>

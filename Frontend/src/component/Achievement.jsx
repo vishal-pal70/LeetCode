@@ -2,7 +2,8 @@ import { motion } from 'framer-motion';
 import { Trophy, Star, Award, Medal, Zap, CheckCircle, ChevronLeft, Lightbulb, LayoutDashboard, BookOpenIcon, X } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
-import axiosClient from '../utils/axiosClient'; // Make sure this is properly configured
+import axiosClient from '../utils/axiosClient';
+import React from 'react';
 
 // Icon mapping to resolve icon names to components
 const iconComponents = {

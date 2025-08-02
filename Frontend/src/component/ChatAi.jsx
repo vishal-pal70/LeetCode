@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import axiosClient from "../utils/axiosClient";
 import { useDispatch, useSelector } from 'react-redux';
@@ -28,17 +28,50 @@ function ChatAi({ problem }) {
   const messagesEndRef = useRef(null);
   const dispatch = useDispatch();
   const messages = useSelector((state) => state.ai.messages);
+  const [streamingResponse, setStreamingResponse] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [currentStreamIndex, setCurrentStreamIndex] = useState(0);
+  const [currentMessageId, setCurrentMessageId] = useState(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, streamingResponse]);
+
+  // Handle streaming effect
+  useEffect(() => {
+    if (!isStreaming || !currentMessageId) return;
+
+    const lastMessage = messages.find(msg => msg.id === currentMessageId);
+    if (!lastMessage) return;
+
+    const fullText = lastMessage.parts[0].text;
+    
+    if (currentStreamIndex < fullText.length) {
+      const timer = setTimeout(() => {
+        setStreamingResponse(fullText.substring(0, currentStreamIndex + 1));
+        setCurrentStreamIndex(currentStreamIndex + 1);
+      }, 10); // Adjust speed here (lower = faster)
+      
+      return () => clearTimeout(timer);
+    } else {
+      // Streaming completed
+      setIsStreaming(false);
+      setStreamingResponse("");
+      setCurrentStreamIndex(0);
+    }
+  }, [isStreaming, currentStreamIndex, messages, currentMessageId]);
 
   const onSubmit = async (data) => {
-    const userMessage = { role: 'user', parts: [{ text: data.message }] };
+    const userMessage = { 
+      role: 'user', 
+      parts: [{ text: data.message }],
+      id: Date.now() // Unique ID for each message
+    };
     dispatch(addMessage(userMessage));
     reset();
 
     try {
+      setIsStreaming(true);
       const response = await axiosClient.post("/ai/chat", {
         messages,
         title: problem.title,
@@ -49,15 +82,22 @@ function ChatAi({ problem }) {
 
       const modelMessage = {
         role: 'model',
-        parts: [{ text: response.data.message }]
+        parts: [{ text: response.data.message }],
+        id: Date.now() // Unique ID for each message
       };
+      
       dispatch(addMessage(modelMessage));
+      setCurrentMessageId(modelMessage.id);
+      setStreamingResponse("");
+      setCurrentStreamIndex(0);
     } catch (error) {
       console.error("API Error:", error);
       dispatch(addMessage({
         role: 'model',
-        parts: [{ text: "Sorry, I'm having trouble responding. Please try again later." }]
+        parts: [{ text: "Sorry, I'm having trouble responding. Please try again later." }],
+        id: Date.now()
       }));
+      setIsStreaming(false);
     }
   };
 
@@ -78,7 +118,7 @@ function ChatAi({ problem }) {
                 Problem: {problem.title}
               </Badge>
               <Badge variant="outline" className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-800 border-emerald-300">
-                Online
+                {isStreaming ? "Typing..." : "Online"}
               </Badge>
             </div>
           </div>
@@ -114,7 +154,7 @@ function ChatAi({ problem }) {
             ) : (
               messages.map((msg, index) => (
                 <div 
-                  key={index} 
+                  key={msg.id} 
                   className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div className={`max-w-[90%] flex ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
@@ -139,7 +179,17 @@ function ChatAi({ problem }) {
                           : "bg-gray-100 text-gray-800 rounded-tl-none"
                       }`}
                     >
-                      <div className="whitespace-pre-wrap">{msg.parts[0].text}</div>
+                      {/* Show streaming response for the last AI message if it's streaming */}
+                      {isStreaming && index === messages.length - 1 && msg.role === "model" ? (
+                        <div className="whitespace-pre-wrap">
+                          {streamingResponse}
+                          {streamingResponse.length < msg.parts[0].text.length && (
+                            <span className="ml-1 inline-block w-2 h-4 bg-gray-400 align-middle animate-blink" />
+                          )}
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-wrap">{msg.parts[0].text}</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -158,7 +208,7 @@ function ChatAi({ problem }) {
             <Input
               placeholder="Ask me anything about the problem..."
               className="flex-1 py-5 px-4 rounded-xl"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isStreaming}
               {...register("message", { 
                 required: "Message cannot be empty", 
                 minLength: {
@@ -174,9 +224,9 @@ function ChatAi({ problem }) {
                     type="submit" 
                     size="icon"
                     className="h-11 w-11 rounded-xl flex-shrink-0"
-                    disabled={isSubmitting || !!errors.message}
+                    disabled={isSubmitting || isStreaming || !!errors.message}
                   >
-                    {isSubmitting ? (
+                    {isSubmitting || isStreaming ? (
                       <div className="flex items-center">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       </div>
@@ -196,6 +246,17 @@ function ChatAi({ problem }) {
           )}
         </form>
       </CardFooter>
+      
+      <style jsx>{`
+        @keyframes blink {
+          0% { opacity: 1; }
+          50% { opacity: 0; }
+          100% { opacity: 1; }
+        }
+        .animate-blink {
+          animation: blink 1s infinite;
+        }
+      `}</style>
     </Card>
   );
 }
